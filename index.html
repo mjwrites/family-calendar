@@ -206,8 +206,8 @@
       upcomingList.sort((a, b) => new Date(a.start) - new Date(b.start));
 
       renderList('today-events', todayList, true);
-      // Show next 5 upcoming events
-      renderList('upcoming-events', upcomingList.slice(0, 5), false);
+      // Show next 6 upcoming events
+      renderList('upcoming-events', upcomingList.slice(0, 6), false);
     }
 
     function renderList(elemId, events, checkCurrent) {
