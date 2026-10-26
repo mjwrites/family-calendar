@@ -116,7 +116,7 @@
     <div class="clock-group">
       <div id="clock">12:00</div>
       <div id="ampm">PM</div>
-      <div id="date-display">Monday, Oct 26</div>
+      <div id="date-display">Loading...</div>
     </div>
     <div class="filters" id="filter-pills"></div>
   </header>
@@ -126,11 +126,12 @@
       <div class="event-list" id="today-events"></div>
     </section>
     <section class="panel">
-      <div class="panel-header">Upcoming (Next 3 Days)</div>
+      <div class="panel-header">Upcoming Events</div>
       <div class="event-list" id="upcoming-events"></div>
     </section>
   </main>
   <script>
+    const TIMEZONE = 'America/Los_Angeles';
     const CALENDARS = [
       { id: 'all', name: 'All', color: '#475569' },
       { id: 'anna_mj', name: 'Anna & MJ', color: '#3f51b5' },
@@ -143,14 +144,25 @@
 
     function updateClock() {
       const now = new Date();
-      let hours = now.getHours();
-      const mins = String(now.getMinutes()).padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12 || 12;
-      document.getElementById('clock').textContent = `${hours}:${mins}`;
+      const timeParts = new Intl.DateTimeFormat('en-US', {
+        timeZone: TIMEZONE,
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }).formatToParts(now);
+
+      const hour = timeParts.find(p => p.type === 'hour').value;
+      const minute = timeParts.find(p => p.type === 'minute').value;
+      const dayPeriod = timeParts.find(p => p.type === 'dayPeriod');
+      const ampm = dayPeriod ? dayPeriod.value : '';
+
+      document.getElementById('clock').textContent = `${hour}:${minute}`;
       document.getElementById('ampm').textContent = ampm;
       document.getElementById('date-display').textContent = now.toLocaleDateString('en-US', {
-        weekday: 'long', month: 'short', day: 'numeric'
+        timeZone: TIMEZONE,
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric'
       });
     }
 
@@ -168,11 +180,13 @@
       });
     }
 
+    function getDayString(d) {
+      return d.toLocaleDateString('en-CA', { timeZone: TIMEZONE });
+    }
+
     function renderEvents() {
       const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const todayEnd = new Date(todayStart.getTime() + 86400000);
-      const upcomingEnd = new Date(todayStart.getTime() + (86400000 * 4));
+      const todayStr = getDayString(now);
 
       const filtered = cachedEvents.filter(e => selectedCal === 'all' || e.calendarId === selectedCal);
       const todayList = [];
@@ -181,12 +195,19 @@
       filtered.forEach(e => {
         const start = new Date(e.start);
         const end = new Date(e.end);
-        if (start < todayEnd && end > todayStart) todayList.push(e);
-        else if (start >= todayEnd && start < upcomingEnd) upcomingList.push(e);
+        const eventDay = getDayString(start);
+        if (eventDay === todayStr || (start <= now && end > now)) {
+          todayList.push(e);
+        } else if (start > now) {
+          upcomingList.push(e);
+        }
       });
 
+      upcomingList.sort((a, b) => new Date(a.start) - new Date(b.start));
+
       renderList('today-events', todayList, true);
-      renderList('upcoming-events', upcomingList, false);
+      // Show next 5 upcoming events
+      renderList('upcoming-events', upcomingList.slice(0, 5), false);
     }
 
     function renderList(elemId, events, checkCurrent) {
@@ -207,24 +228,36 @@
 
         let timeStr = e.allDay ? 'All Day' : `${formatTime(start)} - ${formatTime(end)}`;
         if (!checkCurrent) {
-          timeStr = `${start.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' })} · ${timeStr}`;
+          timeStr = `${formatDate(start)} · ${timeStr}`;
         }
+
+        const cleanTitle = (e.title || '').replace(/\\,/g, ',');
+        const cleanLoc = (e.location || '').replace(/\\,/g, ',');
 
         card.innerHTML = `
           <div class="event-time">${timeStr} · ${e.calendarName}</div>
-          <div class="event-title">${e.title}</div>
-          ${e.location ? `<div class="event-loc">📍 ${e.location}</div>` : ''}
+          <div class="event-title">${cleanTitle}</div>
+          ${cleanLoc ? `<div class="event-loc">📍 ${cleanLoc}</div>` : ''}
         `;
         container.appendChild(card);
       });
     }
 
     function formatTime(d) {
-      let h = d.getHours();
-      const m = String(d.getMinutes()).padStart(2, '0');
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      h = h % 12 || 12;
-      return `${h}:${m} ${ampm}`;
+      return d.toLocaleTimeString('en-US', {
+        timeZone: TIMEZONE,
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+    }
+
+    function formatDate(d) {
+      return d.toLocaleDateString('en-US', {
+        timeZone: TIMEZONE,
+        weekday: 'short',
+        month: 'numeric',
+        day: 'numeric'
+      });
     }
 
     async function fetchEvents() {
@@ -250,7 +283,13 @@
     renderPills();
     fetchEvents();
     requestWakeLock();
+
+    // Remote Window handshake for smart display
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(JSON.stringify({type: 'REMOTE_WINDOW', status: 'LOADED'}), '*');
+      }
+    } catch (e) {}
   </script>
 </body>
 </html>
-
