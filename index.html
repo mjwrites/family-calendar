@@ -29,19 +29,20 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px 28px;
+      padding: 14px 28px;
       background: var(--card-bg);
       border-bottom: 1px solid var(--border);
+      height: 75px;
     }
     .clock-group { display: flex; align-items: baseline; gap: 12px; }
-    #clock { font-size: 2.8rem; font-weight: 700; letter-spacing: -1px; }
-    #ampm { font-size: 1.3rem; color: var(--text-muted); font-weight: 600; }
-    #date-display { font-size: 1.4rem; color: var(--accent); font-weight: 500; }
+    #clock { font-size: 2.6rem; font-weight: 700; letter-spacing: -1px; }
+    #ampm { font-size: 1.2rem; color: var(--text-muted); font-weight: 600; }
+    #date-display { font-size: 1.35rem; color: var(--accent); font-weight: 500; }
     .filters { display: flex; gap: 10px; }
     .pill {
-      padding: 8px 18px;
+      padding: 7px 16px;
       border-radius: 9999px;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
       opacity: 0.45;
@@ -54,25 +55,26 @@
       flex: 1;
       display: grid;
       grid-template-columns: 1fr 2fr;
-      gap: 20px;
-      padding: 20px 28px;
-      height: calc(100vh - 85px);
+      gap: 16px;
+      padding: 16px 24px;
+      height: calc(100vh - 75px);
       overflow: hidden;
     }
 
     .today-panel {
       background: var(--card-bg);
-      border-radius: 18px;
+      border-radius: 16px;
       border: 1px solid var(--border);
-      padding: 20px;
+      padding: 16px 18px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      height: 100%;
     }
     .panel-header {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       font-weight: 700;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -82,35 +84,36 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     .today-events::-webkit-scrollbar { display: none; }
 
     .upcoming-container {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-      align-content: start;
-      overflow-y: auto;
-      padding-right: 4px;
+      grid-template-rows: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      height: 100%;
+      overflow: hidden;
     }
-    .upcoming-container::-webkit-scrollbar { display: none; }
 
     .day-card {
       background: var(--card-bg);
-      border-radius: 18px;
+      border-radius: 14px;
       border: 1px solid var(--border);
-      padding: 16px 18px;
+      padding: 10px 14px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 6px;
+      overflow: hidden;
     }
     .day-header {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      padding-bottom: 8px;
+      padding-bottom: 6px;
       border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
     .day-title-group {
       display: flex;
@@ -118,58 +121,73 @@
       gap: 8px;
     }
     .day-name {
-      font-size: 1.25rem;
+      font-size: 1.05rem;
       font-weight: 700;
       color: #fff;
     }
     .day-date {
-      font-size: 1.05rem;
+      font-size: 0.95rem;
       font-weight: 600;
       color: var(--accent);
     }
     .tomorrow-badge {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 700;
       text-transform: uppercase;
       background: rgba(56, 189, 248, 0.15);
       color: var(--accent);
-      padding: 3px 8px;
-      border-radius: 6px;
+      padding: 2px 6px;
+      border-radius: 4px;
       letter-spacing: 0.05em;
     }
     .day-events {
+      flex: 1;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
+    .day-events::-webkit-scrollbar { display: none; }
 
     .event-card {
-      padding: 12px 16px;
-      border-radius: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
       color: #fff;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
       position: relative;
+      flex-shrink: 0;
     }
     .event-card.current {
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
-      border: 2px solid #fff;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
+      border: 1px solid #fff;
     }
     .event-card.current::after {
       content: 'NOW';
       position: absolute;
-      right: 14px;
-      top: 14px;
+      right: 8px;
+      top: 6px;
       background: rgba(0,0,0,0.5);
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.65rem;
       font-weight: 800;
     }
-    .event-time { font-size: 0.9rem; font-weight: 600; opacity: 0.9; }
-    .event-title { font-size: 1.15rem; font-weight: 700; line-height: 1.2; }
-    .event-loc { font-size: 0.8rem; opacity: 0.8; }
+    .event-time { font-size: 0.75rem; font-weight: 600; opacity: 0.9; }
+    .event-title { font-size: 0.95rem; font-weight: 700; line-height: 1.2; }
+    .event-loc { font-size: 0.75rem; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .no-events {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(148, 163, 184, 0.4);
+      font-size: 0.88rem;
+      font-style: italic;
+    }
+
     .empty-state {
       flex: 1;
       display: flex;
@@ -195,6 +213,8 @@
       }
       .upcoming-container {
         grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        height: auto;
         overflow: visible;
       }
     }
@@ -271,16 +291,27 @@
       return d.toLocaleDateString('en-CA', { timeZone: TIMEZONE });
     }
 
+    function getDaysAhead(startDate, daysAhead) {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: TIMEZONE,
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric'
+      }).formatToParts(startDate);
+      const year = parseInt(parts.find(p => p.type === 'year').value, 10);
+      const month = parseInt(parts.find(p => p.type === 'month').value, 10) - 1;
+      const day = parseInt(parts.find(p => p.type === 'day').value, 10);
+
+      return new Date(Date.UTC(year, month, day + daysAhead, 12, 0, 0));
+    }
+
     function renderEvents() {
       const now = new Date();
       const todayStr = getDayString(now);
 
-      const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      const tomorrowStr = getDayString(tomorrow);
-
       const filtered = cachedEvents.filter(e => selectedCal === 'all' || e.calendarId === selectedCal);
       const todayList = [];
-      const upcomingList = [];
+      const eventsByDay = new Map();
 
       filtered.forEach(e => {
         const start = new Date(e.start);
@@ -288,15 +319,18 @@
         const eventDay = getDayString(start);
         if (eventDay === todayStr || (start <= now && end > now)) {
           todayList.push(e);
-        } else if (start > now) {
-          upcomingList.push(e);
+        } else {
+          if (!eventsByDay.has(eventDay)) {
+            eventsByDay.set(eventDay, []);
+          }
+          eventsByDay.get(eventDay).push(e);
         }
       });
 
-      upcomingList.sort((a, b) => new Date(a.start) - new Date(b.start));
+      todayList.sort((a, b) => new Date(a.start) - new Date(b.start));
 
       renderTodayList(todayList);
-      renderUpcomingDays(upcomingList, tomorrowStr);
+      render6DaysGrid(eventsByDay, now);
     }
 
     function renderTodayList(events) {
@@ -316,38 +350,23 @@
       });
     }
 
-    function renderUpcomingDays(events, tomorrowStr) {
+    function render6DaysGrid(eventsByDay, now) {
       const container = document.getElementById('upcoming-container');
       container.innerHTML = '';
-      if (!events.length) {
-        container.innerHTML = `
-          <div class="empty-state" style="grid-column: 1 / -1;">
-            <div class="empty-state-icon">📅</div>
-            <div>No upcoming events scheduled</div>
-          </div>`;
-        return;
-      }
 
-      const daysMap = new Map();
-      events.forEach(e => {
-        const start = new Date(e.start);
-        const dayKey = getDayString(start);
-        if (!daysMap.has(dayKey)) {
-          daysMap.set(dayKey, { date: start, dayKey: dayKey, events: [] });
-        }
-        daysMap.get(dayKey).events.push(e);
-      });
+      // Days 1 through 6
+      for (let i = 1; i <= 6; i++) {
+        const dayDate = getDaysAhead(now, i);
+        const dayKey = getDayString(dayDate);
+        const dayEvents = eventsByDay.get(dayKey) || [];
+        dayEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
 
-      const now = new Date();
-      const days = Array.from(daysMap.values()).slice(0, 6);
-
-      days.forEach(day => {
         const dayCard = document.createElement('div');
         dayCard.className = 'day-card';
 
-        const isTomorrow = day.dayKey === tomorrowStr;
-        const weekdayName = day.date.toLocaleDateString('en-US', { timeZone: TIMEZONE, weekday: 'long' });
-        const monthDay = day.date.toLocaleDateString('en-US', { timeZone: TIMEZONE, month: 'short', day: 'numeric' });
+        const isTomorrow = (i === 1);
+        const weekdayName = dayDate.toLocaleDateString('en-US', { timeZone: TIMEZONE, weekday: 'long' });
+        const monthDay = dayDate.toLocaleDateString('en-US', { timeZone: TIMEZONE, month: 'short', day: 'numeric' });
 
         dayCard.innerHTML = `
           <div class="day-header">
@@ -361,12 +380,16 @@
         `;
 
         const eventsContainer = dayCard.querySelector('.day-events');
-        day.events.forEach(e => {
-          eventsContainer.appendChild(createEventCard(e, now, false));
-        });
+        if (dayEvents.length > 0) {
+          dayEvents.forEach(e => {
+            eventsContainer.appendChild(createEventCard(e, now, false));
+          });
+        } else {
+          eventsContainer.innerHTML = '<div class="no-events">No events</div>';
+        }
 
         container.appendChild(dayCard);
-      });
+      }
     }
 
     function createEventCard(e, now, checkCurrent) {
@@ -412,6 +435,22 @@
 
     setInterval(updateClock, 1000);
     setInterval(fetchEvents, 60000);
+
+    // Auto-reload webpage when new GitHub Pages commit deploys
+    async function checkForPageUpdate() {
+      try {
+        const resp = await fetch(window.location.href, { method: 'HEAD', cache: 'no-cache' });
+        const etag = resp.headers.get('etag') || resp.headers.get('last-modified');
+        if (window._pageEtag && etag && window._pageEtag !== etag) {
+          console.log('New deployment detected, reloading page...');
+          window.location.reload();
+        }
+        if (etag) window._pageEtag = etag;
+      } catch (e) {}
+    }
+    setInterval(checkForPageUpdate, 120000);
+    checkForPageUpdate();
+
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') requestWakeLock();
     });
