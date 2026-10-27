@@ -8,9 +8,11 @@
     :root {
       --bg: #0f172a;
       --card-bg: rgba(30, 41, 59, 0.7);
+      --card-inner-bg: rgba(15, 23, 42, 0.4);
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --border: rgba(255, 255, 255, 0.08);
+      --accent: #38bdf8;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -34,7 +36,7 @@
     .clock-group { display: flex; align-items: baseline; gap: 12px; }
     #clock { font-size: 2.8rem; font-weight: 700; letter-spacing: -1px; }
     #ampm { font-size: 1.3rem; color: var(--text-muted); font-weight: 600; }
-    #date-display { font-size: 1.4rem; color: #38bdf8; font-weight: 500; }
+    #date-display { font-size: 1.4rem; color: var(--accent); font-weight: 500; }
     .filters { display: flex; gap: 10px; }
     .pill {
       padding: 8px 18px;
@@ -47,15 +49,18 @@
       border: 1px solid transparent;
     }
     .pill.active { opacity: 1; transform: scale(1.05); }
+
     main {
       flex: 1;
       display: grid;
-      grid-template-columns: 1.3fr 0.9fr;
+      grid-template-columns: 1fr 2fr;
       gap: 20px;
       padding: 20px 28px;
       height: calc(100vh - 85px);
+      overflow: hidden;
     }
-    .panel {
+
+    .today-panel {
       background: var(--card-bg);
       border-radius: 18px;
       border: 1px solid var(--border);
@@ -72,10 +77,74 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
-    .event-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-    .event-list::-webkit-scrollbar { display: none; }
+    .today-events {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .today-events::-webkit-scrollbar { display: none; }
+
+    .upcoming-container {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      align-content: start;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .upcoming-container::-webkit-scrollbar { display: none; }
+
+    .day-card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .day-title-group {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .day-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .day-date {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .tomorrow-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      padding: 3px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+    }
+    .day-events {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
     .event-card {
-      padding: 14px 18px;
+      padding: 12px 16px;
       border-radius: 12px;
       color: #fff;
       display: flex;
@@ -98,16 +167,36 @@
       font-size: 0.75rem;
       font-weight: 800;
     }
-    .event-time { font-size: 0.95rem; font-weight: 600; opacity: 0.9; }
-    .event-title { font-size: 1.2rem; font-weight: 700; }
-    .event-loc { font-size: 0.85rem; opacity: 0.8; }
+    .event-time { font-size: 0.9rem; font-weight: 600; opacity: 0.9; }
+    .event-title { font-size: 1.15rem; font-weight: 700; line-height: 1.2; }
+    .event-loc { font-size: 0.8rem; opacity: 0.8; }
     .empty-state {
       flex: 1;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       color: var(--text-muted);
-      font-size: 1.2rem;
+      font-size: 1.15rem;
+      text-align: center;
+      gap: 8px;
+    }
+    .empty-state-icon {
+      font-size: 2.2rem;
+      opacity: 0.6;
+    }
+
+    @media (max-width: 900px) {
+      body { height: auto; overflow: auto; }
+      main {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+      }
+      .upcoming-container {
+        grid-template-columns: 1fr;
+        overflow: visible;
+      }
     }
   </style>
 </head>
@@ -121,13 +210,11 @@
     <div class="filters" id="filter-pills"></div>
   </header>
   <main>
-    <section class="panel">
+    <section class="today-panel">
       <div class="panel-header">Today's Schedule</div>
-      <div class="event-list" id="today-events"></div>
+      <div class="today-events" id="today-events"></div>
     </section>
-    <section class="panel">
-      <div class="panel-header">Upcoming Events</div>
-      <div class="event-list" id="upcoming-events"></div>
+    <section class="upcoming-container" id="upcoming-container">
     </section>
   </main>
   <script>
@@ -188,6 +275,9 @@
       const now = new Date();
       const todayStr = getDayString(now);
 
+      const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const tomorrowStr = getDayString(tomorrow);
+
       const filtered = cachedEvents.filter(e => selectedCal === 'all' || e.calendarId === selectedCal);
       const todayList = [];
       const upcomingList = [];
@@ -205,42 +295,98 @@
 
       upcomingList.sort((a, b) => new Date(a.start) - new Date(b.start));
 
-      renderList('today-events', todayList, true);
-      // Show next 6 upcoming events
-      renderList('upcoming-events', upcomingList.slice(0, 6), false);
+      renderTodayList(todayList);
+      renderUpcomingDays(upcomingList, tomorrowStr);
     }
 
-    function renderList(elemId, events, checkCurrent) {
-      const container = document.getElementById(elemId);
+    function renderTodayList(events) {
+      const container = document.getElementById('today-events');
       container.innerHTML = '';
       if (!events.length) {
-        container.innerHTML = '<div class="empty-state">No events scheduled</div>';
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">✨</div>
+            <div>All clear for today!</div>
+          </div>`;
         return;
       }
       const now = new Date();
       events.forEach(e => {
-        const start = new Date(e.start);
-        const end = new Date(e.end);
-        const isCurrent = checkCurrent && (now >= start && now < end);
-        const card = document.createElement('div');
-        card.className = `event-card ${isCurrent ? 'current' : ''}`;
-        card.style.backgroundColor = e.color;
-
-        let timeStr = e.allDay ? 'All Day' : `${formatTime(start)} - ${formatTime(end)}`;
-        if (!checkCurrent) {
-          timeStr = `${formatDate(start)} · ${timeStr}`;
-        }
-
-        const cleanTitle = (e.title || '').replace(/\\,/g, ',');
-        const cleanLoc = (e.location || '').replace(/\\,/g, ',');
-
-        card.innerHTML = `
-          <div class="event-time">${timeStr} · ${e.calendarName}</div>
-          <div class="event-title">${cleanTitle}</div>
-          ${cleanLoc ? `<div class="event-loc">📍 ${cleanLoc}</div>` : ''}
-        `;
-        container.appendChild(card);
+        container.appendChild(createEventCard(e, now, true));
       });
+    }
+
+    function renderUpcomingDays(events, tomorrowStr) {
+      const container = document.getElementById('upcoming-container');
+      container.innerHTML = '';
+      if (!events.length) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-state-icon">📅</div>
+            <div>No upcoming events scheduled</div>
+          </div>`;
+        return;
+      }
+
+      const daysMap = new Map();
+      events.forEach(e => {
+        const start = new Date(e.start);
+        const dayKey = getDayString(start);
+        if (!daysMap.has(dayKey)) {
+          daysMap.set(dayKey, { date: start, dayKey: dayKey, events: [] });
+        }
+        daysMap.get(dayKey).events.push(e);
+      });
+
+      const now = new Date();
+      const days = Array.from(daysMap.values()).slice(0, 6);
+
+      days.forEach(day => {
+        const dayCard = document.createElement('div');
+        dayCard.className = 'day-card';
+
+        const isTomorrow = day.dayKey === tomorrowStr;
+        const weekdayName = day.date.toLocaleDateString('en-US', { timeZone: TIMEZONE, weekday: 'long' });
+        const monthDay = day.date.toLocaleDateString('en-US', { timeZone: TIMEZONE, month: 'short', day: 'numeric' });
+
+        dayCard.innerHTML = `
+          <div class="day-header">
+            <div class="day-title-group">
+              <span class="day-name">${weekdayName}</span>
+              <span class="day-date">${monthDay}</span>
+            </div>
+            ${isTomorrow ? '<span class="tomorrow-badge">Tomorrow</span>' : ''}
+          </div>
+          <div class="day-events"></div>
+        `;
+
+        const eventsContainer = dayCard.querySelector('.day-events');
+        day.events.forEach(e => {
+          eventsContainer.appendChild(createEventCard(e, now, false));
+        });
+
+        container.appendChild(dayCard);
+      });
+    }
+
+    function createEventCard(e, now, checkCurrent) {
+      const start = new Date(e.start);
+      const end = new Date(e.end);
+      const isCurrent = checkCurrent && (now >= start && now < end);
+      const card = document.createElement('div');
+      card.className = `event-card ${isCurrent ? 'current' : ''}`;
+      card.style.backgroundColor = e.color;
+
+      const timeStr = e.allDay ? 'All Day' : `${formatTime(start)} - ${formatTime(end)}`;
+      const cleanTitle = (e.title || '').replace(/\\,/g, ',');
+      const cleanLoc = (e.location || '').replace(/\\,/g, ',');
+
+      card.innerHTML = `
+        <div class="event-time">${timeStr} · ${e.calendarName}</div>
+        <div class="event-title">${cleanTitle}</div>
+        ${cleanLoc ? `<div class="event-loc">📍 ${cleanLoc}</div>` : ''}
+      `;
+      return card;
     }
 
     function formatTime(d) {
@@ -248,15 +394,6 @@
         timeZone: TIMEZONE,
         hour: 'numeric',
         minute: '2-digit'
-      });
-    }
-
-    function formatDate(d) {
-      return d.toLocaleDateString('en-US', {
-        timeZone: TIMEZONE,
-        weekday: 'short',
-        month: 'numeric',
-        day: 'numeric'
       });
     }
 
@@ -284,7 +421,6 @@
     fetchEvents();
     requestWakeLock();
 
-    // Remote Window handshake for smart display
     try {
       if (window.parent && window.parent !== window) {
         window.parent.postMessage(JSON.stringify({type: 'REMOTE_WINDOW', status: 'LOADED'}), '*');
