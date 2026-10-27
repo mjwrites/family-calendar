@@ -84,7 +84,7 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
     .today-events::-webkit-scrollbar { display: none; }
 
@@ -149,34 +149,77 @@
     }
     .day-events::-webkit-scrollbar { display: none; }
 
+    /* Base event card */
     .event-card {
-      padding: 6px 10px;
-      border-radius: 8px;
       color: #fff;
       display: flex;
       flex-direction: column;
-      gap: 2px;
       position: relative;
       flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
     .event-card.current {
-      box-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
-      border: 1px solid #fff;
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.35);
+      border: 2px solid #fff;
     }
     .event-card.current::after {
       content: 'NOW';
       position: absolute;
-      right: 8px;
-      top: 6px;
-      background: rgba(0,0,0,0.5);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 0.65rem;
+      right: 12px;
+      top: 10px;
+      background: rgba(0, 0, 0, 0.55);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
       font-weight: 800;
+      letter-spacing: 0.05em;
     }
-    .event-time { font-size: 0.75rem; font-weight: 600; opacity: 0.9; }
-    .event-title { font-size: 0.95rem; font-weight: 700; line-height: 1.2; }
-    .event-loc { font-size: 0.75rem; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Today's Schedule events: prominent, spacious & legible from across the kitchen */
+    .today-panel .event-card {
+      padding: 18px 22px;
+      border-radius: 14px;
+      gap: 6px;
+    }
+    .today-panel .event-time {
+      font-size: 1.05rem;
+      font-weight: 600;
+      opacity: 0.95;
+    }
+    .today-panel .event-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .today-panel .event-loc {
+      font-size: 0.9rem;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    /* 6-Day Preview Grid events: compact to fit neatly within 2x3 grid cells */
+    .day-card .event-card {
+      padding: 8px 12px;
+      border-radius: 8px;
+      gap: 2px;
+    }
+    .day-card .event-time {
+      font-size: 0.78rem;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+    .day-card .event-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .day-card .event-loc {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
     .no-events {
       flex: 1;
@@ -453,6 +496,7 @@
     setInterval(updateClock, 1000);
     setInterval(fetchEvents, 60000);
 
+    // Auto-reload webpage when new GitHub Pages commit deploys
     async function checkForPageUpdate() {
       try {
         const resp = await fetch(window.location.href, { method: 'HEAD', cache: 'no-cache' });
