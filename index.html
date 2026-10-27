@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Family Calendar</title>
   <style>
     :root {
@@ -18,12 +18,13 @@
     body {
       background-color: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       height: 100vh;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       user-select: none;
+      -webkit-user-select: none;
     }
     header {
       display: flex;
@@ -84,7 +85,7 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     .today-events::-webkit-scrollbar { display: none; }
 
@@ -175,7 +176,7 @@
       letter-spacing: 0.05em;
     }
 
-    /* Today's Schedule events: prominent, spacious & legible from across the kitchen */
+    /* Today's Schedule events: prominent, spacious & legible from across the room */
     .today-panel .event-card {
       padding: 18px 22px;
       border-radius: 14px;
@@ -197,7 +198,7 @@
       margin-top: 2px;
     }
 
-    /* 6-Day Preview Grid events: compact to fit neatly within 2x3 grid cells */
+    /* 6-Day Preview Grid events: compact to fit neatly within the 2x3 grid cells */
     .day-card .event-card {
       padding: 8px 12px;
       border-radius: 8px;
@@ -240,7 +241,8 @@
       color: var(--text-muted);
       font-size: 1.15rem;
       text-align: center;
-      gap: 8px;
+      gap: 10px;
+      transform: translateY(-25px); /* Centers the block optically on the text instead of the emoji */
     }
     .empty-state-icon {
       font-size: 2.2rem;
@@ -268,134 +270,140 @@
     <div class="clock-group">
       <div id="clock">12:00</div>
       <div id="ampm">PM</div>
-      <div id="date-display">Loading...</div>
+      <div id="date-display">Today</div>
     </div>
-    <div class="filters" id="filter-pills"></div>
+    <div class="filters" id="calendar-pills"></div>
   </header>
   <main>
     <section class="today-panel">
       <div class="panel-header">Today's Schedule</div>
       <div class="today-events" id="today-events"></div>
     </section>
-    <section class="upcoming-container" id="upcoming-container">
-    </section>
+    <section class="upcoming-container" id="upcoming-container"></section>
   </main>
+
   <script>
     const TIMEZONE = 'America/Los_Angeles';
-    const CALENDARS = [
-      { id: 'all', name: 'All', color: '#475569' },
-      { id: 'anna_mj', name: 'Anna & MJ', color: '#3f51b5' },
-      { id: 'anna', name: 'Anna', color: '#ab47bc' },
-      { id: 'boys', name: 'Boys', color: '#f57c00' },
-      { id: 'mj', name: 'MJ', color: '#00897b' }
-    ];
-    let selectedCal = 'all';
     let cachedEvents = [];
+    let activeFilter = 'All';
+
+    const CALENDAR_COLORS = {
+      'Anna & MJ': '#6366f1',
+      'MJ Ramos': '#0ea5e9',
+      'Anna': '#ec4899',
+      'US Holidays': '#10b981'
+    };
 
     function updateClock() {
       const now = new Date();
-      const timeParts = new Intl.DateTimeFormat('en-US', {
+      const timeStr = now.toLocaleTimeString('en-US', {
         timeZone: TIMEZONE,
         hour: 'numeric',
         minute: '2-digit',
         hour12: true
-      }).formatToParts(now);
+      });
+      const [timePart, ampm] = timeStr.split(' ');
+      document.getElementById('clock').textContent = timePart;
+      document.getElementById('ampm').textContent = ampm || '';
 
-      const hour = timeParts.find(p => p.type === 'hour').value;
-      const minute = timeParts.find(p => p.type === 'minute').value;
-      const dayPeriod = timeParts.find(p => p.type === 'dayPeriod');
-      const ampm = dayPeriod ? dayPeriod.value : '';
-
-      document.getElementById('clock').textContent = `${hour}:${minute}`;
-      document.getElementById('ampm').textContent = ampm;
-      document.getElementById('date-display').textContent = now.toLocaleDateString('en-US', {
+      const dateStr = now.toLocaleDateString('en-US', {
         timeZone: TIMEZONE,
         weekday: 'long',
         month: 'short',
         day: 'numeric'
       });
+      document.getElementById('date-display').textContent = dateStr;
     }
 
     function renderPills() {
-      const container = document.getElementById('filter-pills');
-      container.innerHTML = '';
-      CALENDARS.forEach(cal => {
-        const btn = document.createElement('div');
-        btn.className = `pill ${selectedCal === cal.id ? 'active' : ''}`;
-        btn.textContent = cal.name;
-        btn.style.backgroundColor = cal.color;
-        btn.style.color = '#fff';
-        btn.onclick = () => { selectedCal = cal.id; renderPills(); renderEvents(); };
-        container.appendChild(btn);
+      const pillsContainer = document.getElementById('calendar-pills');
+      pillsContainer.innerHTML = '';
+      
+      const allPill = document.createElement('div');
+      allPill.className = `pill ${activeFilter === 'All' ? 'active' : ''}`;
+      allPill.textContent = 'All';
+      allPill.style.backgroundColor = activeFilter === 'All' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.05)';
+      allPill.onclick = () => { activeFilter = 'All'; renderPills(); renderEvents(); };
+      pillsContainer.appendChild(allPill);
+
+      Object.entries(CALENDAR_COLORS).forEach(([name, color]) => {
+        const pill = document.createElement('div');
+        pill.className = `pill ${activeFilter === name ? 'active' : ''}`;
+        pill.textContent = name;
+        pill.style.backgroundColor = activeFilter === name ? color : 'rgba(255,255,255,0.05)';
+        if (activeFilter === name) {
+          pill.style.boxShadow = `0 0 10px ${color}88`;
+        }
+        pill.onclick = () => {
+          activeFilter = (activeFilter === name) ? 'All' : name;
+          renderPills();
+          renderEvents();
+        };
+        pillsContainer.appendChild(pill);
       });
     }
 
-    function getDayString(d) {
-      return d.toLocaleDateString('en-CA', { timeZone: TIMEZONE });
+    function getDayString(date) {
+      return date.toLocaleDateString('en-CA', { timeZone: TIMEZONE });
     }
 
-    function getDaysAhead(startDate, daysAhead) {
-      const parts = new Intl.DateTimeFormat('en-US', {
-        timeZone: TIMEZONE,
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric'
-      }).formatToParts(startDate);
-      const year = parseInt(parts.find(p => p.type === 'year').value, 10);
-      const month = parseInt(parts.find(p => p.type === 'month').value, 10) - 1;
-      const day = parseInt(parts.find(p => p.type === 'day').value, 10);
-
-      return new Date(Date.UTC(year, month, day + daysAhead, 12, 0, 0));
+    function getDaysAhead(baseDate, offsetDays) {
+      const d = new Date(baseDate.toLocaleString('en-US', { timeZone: TIMEZONE }));
+      d.setDate(d.getDate() + offsetDays);
+      return d;
     }
 
     function renderEvents() {
       const now = new Date();
       const todayStr = getDayString(now);
 
-      const filtered = cachedEvents.filter(e => selectedCal === 'all' || e.calendarId === selectedCal);
-      const todayList = [];
-      const eventsByDay = new Map();
+      const filtered = activeFilter === 'All'
+        ? cachedEvents
+        : cachedEvents.filter(e => e.calendarName === activeFilter);
 
-      filtered.forEach(e => {
-        const start = new Date(e.start);
-        const end = new Date(e.end);
-        const eventDay = getDayString(start);
-        if (eventDay === todayStr || (start <= now && end > now)) {
-          todayList.push(e);
-        } else {
-          if (!eventsByDay.has(eventDay)) {
-            eventsByDay.set(eventDay, []);
-          }
-          eventsByDay.get(eventDay).push(e);
-        }
-      });
-
-      todayList.sort((a, b) => new Date(a.start) - new Date(b.start));
-
-      renderTodayList(todayList);
-      render6DaysGrid(eventsByDay, now);
+      renderTodayEvents(filtered, now, todayStr);
+      renderUpcomingDays(filtered, now, todayStr);
     }
 
-    function renderTodayList(events) {
+    function renderTodayEvents(events, now, todayStr) {
       const container = document.getElementById('today-events');
       container.innerHTML = '';
-      if (!events.length) {
+
+      const todayEvents = events.filter(e => {
+        const s = getDayString(new Date(e.start));
+        const end = new Date(e.end);
+        return s === todayStr || (s < todayStr && end > now);
+      });
+
+      todayEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+      if (todayEvents.length === 0) {
         container.innerHTML = `
           <div class="empty-state">
             <div class="empty-state-icon">✨</div>
             <div>All clear for today!</div>
-          </div>`;
+          </div>
+        `;
         return;
       }
-      const now = new Date();
-      events.forEach(e => {
+
+      todayEvents.forEach(e => {
         container.appendChild(createEventCard(e, now, true));
       });
     }
 
-    function render6DaysGrid(eventsByDay, now) {
+    function renderUpcomingDays(events, now, todayStr) {
       const container = document.getElementById('upcoming-container');
       container.innerHTML = '';
+
+      const eventsByDay = new Map();
+      events.forEach(e => {
+        const dayKey = getDayString(new Date(e.start));
+        if (dayKey > todayStr) {
+          if (!eventsByDay.has(dayKey)) eventsByDay.set(dayKey, []);
+          eventsByDay.get(dayKey).push(e);
+        }
+      });
 
       for (let i = 1; i <= 6; i++) {
         const dayDate = getDaysAhead(now, i);
@@ -458,7 +466,8 @@
       return d.toLocaleTimeString('en-US', {
         timeZone: TIMEZONE,
         hour: 'numeric',
-        minute: '2-digit'
+        minute: '2-digit',
+        hour12: true
       });
     }
 
@@ -490,12 +499,11 @@
     async function requestWakeLock() {
       try {
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
-      } catch(e) {}
+      } catch (err) {}
     }
 
     setInterval(updateClock, 1000);
     setInterval(fetchEvents, 60000);
-
     // Auto-reload webpage when new GitHub Pages commit deploys
     async function checkForPageUpdate() {
       try {
@@ -508,7 +516,7 @@
         if (etag) window._pageEtag = etag;
       } catch (e) {}
     }
-    setInterval(checkForPageUpdate, 120000);
+    setInterval(checkForPageUpdate, 120000); // Check every 2 minutes
     checkForPageUpdate();
 
     document.addEventListener('visibilitychange', () => {
@@ -524,7 +532,7 @@
       if (window.parent && window.parent !== window) {
         window.parent.postMessage(JSON.stringify({type: 'REMOTE_WINDOW', status: 'LOADED'}), '*');
       }
-    } catch (e) {}
+    } catch(e) {}
   </script>
 </body>
 </html>
