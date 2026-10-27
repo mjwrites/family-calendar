@@ -273,7 +273,7 @@
       <div id="ampm">PM</div>
       <div id="date-display">Today</div>
     </div>
-    <div class="filters" id="calendar-pills"></div>
+    <div class="filters" id="filter-pills"></div>
   </header>
   <main>
     <section class="today-panel">
@@ -287,14 +287,16 @@
   <script>
     const TIMEZONE = 'America/Los_Angeles';
     let cachedEvents = [];
-    let activeFilter = 'All';
+    let selectedCal = 'all';
 
-    const CALENDAR_COLORS = {
-      'Anna & MJ': '#6366f1',
-      'MJ Ramos': '#0ea5e9',
-      'Anna': '#ec4899',
-      'US Holidays': '#10b981'
-    };
+    const CALENDARS = [
+      { id: 'all', name: 'All', color: '#475569' },
+      { id: 'anna_mj', name: 'Anna & MJ', color: '#3f51b5' },
+      { id: 'mj', name: 'MJ', color: '#00897b' },
+      { id: 'anna', name: 'Anna', color: '#ab47bc' },
+      { id: 'boys', name: 'Boys', color: '#f57c00' },
+      { id: 'us_holidays', name: 'US Holidays', color: '#10b981' }
+    ];
 
     const FUN_FACTS_START_DATE = '2026-10-27';
 
@@ -335,23 +337,26 @@
 
     function updateClock() {
       const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-US', {
+      const timeParts = new Intl.DateTimeFormat('en-US', {
         timeZone: TIMEZONE,
         hour: 'numeric',
         minute: '2-digit',
         hour12: true
-      });
-      const [timePart, ampm] = timeStr.split(' ');
-      document.getElementById('clock').textContent = timePart;
-      document.getElementById('ampm').textContent = ampm || '';
+      }).formatToParts(now);
 
-      const dateStr = now.toLocaleDateString('en-US', {
+      const hour = timeParts.find(p => p.type === 'hour').value;
+      const minute = timeParts.find(p => p.type === 'minute').value;
+      const dayPeriod = timeParts.find(p => p.type === 'dayPeriod');
+      const ampm = dayPeriod ? dayPeriod.value : '';
+
+      document.getElementById('clock').textContent = `${hour}:${minute}`;
+      document.getElementById('ampm').textContent = ampm;
+      document.getElementById('date-display').textContent = now.toLocaleDateString('en-US', {
         timeZone: TIMEZONE,
         weekday: 'long',
         month: 'short',
         day: 'numeric'
       });
-      document.getElementById('date-display').textContent = dateStr;
 
       // Auto-clear check: re-evaluate at the start of every minute
       if (now.getSeconds() === 0 && cachedEvents.length > 0) {
@@ -360,50 +365,56 @@
     }
 
     function renderPills() {
-      const pillsContainer = document.getElementById('calendar-pills');
-      pillsContainer.innerHTML = '';
-      
-      const allPill = document.createElement('div');
-      allPill.className = `pill ${activeFilter === 'All' ? 'active' : ''}`;
-      allPill.textContent = 'All';
-      allPill.style.backgroundColor = activeFilter === 'All' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.05)';
-      allPill.onclick = () => { activeFilter = 'All'; renderPills(); renderEvents(); };
-      pillsContainer.appendChild(allPill);
-
-      Object.entries(CALENDAR_COLORS).forEach(([name, color]) => {
-        const pill = document.createElement('div');
-        pill.className = `pill ${activeFilter === name ? 'active' : ''}`;
-        pill.textContent = name;
-        pill.style.backgroundColor = activeFilter === name ? color : 'rgba(255,255,255,0.05)';
-        if (activeFilter === name) {
-          pill.style.boxShadow = `0 0 10px ${color}88`;
-        }
-        pill.onclick = () => {
-          activeFilter = (activeFilter === name) ? 'All' : name;
-          renderPills();
-          renderEvents();
-        };
-        pillsContainer.appendChild(pill);
+      const container = document.getElementById('filter-pills');
+      container.innerHTML = '';
+      CALENDARS.forEach(cal => {
+        const btn = document.createElement('div');
+        btn.className = `pill ${selectedCal === cal.id ? 'active' : ''}`;
+        btn.textContent = cal.name;
+        btn.style.backgroundColor = cal.color;
+        btn.style.color = '#fff';
+        btn.onclick = () => { selectedCal = cal.id; renderPills(); renderEvents(); };
+        container.appendChild(btn);
       });
     }
 
-    function getDayString(date) {
-      return date.toLocaleDateString('en-CA', { timeZone: TIMEZONE });
+    function getDayString(d) {
+      return d.toLocaleDateString('en-CA', { timeZone: TIMEZONE });
     }
 
-    function getDaysAhead(baseDate, offsetDays) {
-      const d = new Date(baseDate.toLocaleString('en-US', { timeZone: TIMEZONE }));
-      d.setDate(d.getDate() + offsetDays);
-      return d;
+    function getDaysAhead(startDate, daysAhead) {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: TIMEZONE,
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric'
+      }).formatToParts(startDate);
+      const year = parseInt(parts.find(p => p.type === 'year').value, 10);
+      const month = parseInt(parts.find(p => p.type === 'month').value, 10) - 1;
+      const day = parseInt(parts.find(p => p.type === 'day').value, 10);
+
+      return new Date(Date.UTC(year, month, day + daysAhead, 12, 0, 0));
     }
 
     function renderEvents() {
       const now = new Date();
       const todayStr = getDayString(now);
 
-      const filtered = activeFilter === 'All'
-        ? cachedEvents
-        : cachedEvents.filter(e => e.calendarName === activeFilter);
+      const filtered = cachedEvents.filter(e => {
+        if (selectedCal === 'all') return true;
+        const target = CALENDARS.find(c => c.id === selectedCal);
+        if (!target) return true;
+        const eId = (e.calendarId || '').toLowerCase();
+        const eName = (e.calendarName || '').toLowerCase();
+        const tId = target.id.toLowerCase();
+        const tName = target.name.toLowerCase();
+
+        if (eId === tId || eName === tName) return true;
+        if (target.id === 'us_holidays' && (eId.includes('holiday') || eName.includes('holiday'))) return true;
+        if (target.id === 'mj' && (eId === 'mj' || eName === 'mj' || eName === 'mj ramos')) return true;
+        if (target.id === 'boys' && (eId.includes('boy') || eName.includes('boy'))) return true;
+        return false;
+      });
 
       const todayList = [];
       const eventsByDay = new Map();
@@ -530,12 +541,12 @@
     }
 
     function formatTime(d) {
-      return d.toLocaleTimeString('en-US', {
+      return new Intl.DateTimeFormat('en-US', {
         timeZone: TIMEZONE,
         hour: 'numeric',
         minute: '2-digit',
         hour12: true
-      });
+      }).format(d);
     }
 
     const EVENTS_API_URL = 'https://script.google.com/macros/s/AKfycbwq-Yzjxyu5gbaoM4iT7qwHX8wdcJ6X77UsXPtr0X1LLn7A6C86RkOzAvqOevqceyQ0/exec';
