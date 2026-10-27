@@ -29,23 +29,23 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 14px 28px;
+      padding: 0 28px;
       background: var(--card-bg);
       border-bottom: 1px solid var(--border);
       height: 75px;
       position: relative;
       z-index: 100;
     }
-    .clock-group { display: flex; align-items: baseline; gap: 12px; }
-    #clock { font-size: 2.6rem; font-weight: 700; letter-spacing: -1px; }
-    #ampm { font-size: 1.2rem; color: var(--text-muted); font-weight: 600; }
-    #date-display { font-size: 1.35rem; color: var(--accent); font-weight: 500; }
     .filters {
       display: flex;
       gap: 10px;
       position: relative;
       z-index: 101;
     }
+    .clock-group { display: flex; align-items: baseline; gap: 12px; }
+    #clock { font-size: 2.6rem; font-weight: 700; letter-spacing: -1px; }
+    #ampm { font-size: 1.2rem; color: var(--text-muted); font-weight: 600; }
+    #date-display { font-size: 1.35rem; color: var(--accent); font-weight: 500; }
     .pill {
       padding: 7px 16px;
       border-radius: 9999px;
@@ -70,72 +70,78 @@
 
     main {
       flex: 1;
-      display: grid;
-      grid-template-columns: 1fr 2fr;
-      gap: 16px;
+      display: flex;
       padding: 16px 24px;
-      height: calc(100vh - 75px);
+      gap: 20px;
       overflow: hidden;
     }
 
+    /* Left 1/3: Today's Schedule */
     .today-panel {
+      flex: 0 0 32%;
       background: var(--card-bg);
-      border-radius: 16px;
       border: 1px solid var(--border);
-      padding: 16px 18px;
+      border-radius: 20px;
+      padding: 18px 20px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      height: 100%;
     }
-    .panel-header {
-      font-size: 1.15rem;
+    .today-panel .panel-header {
+      font-size: 1.25rem;
       font-weight: 700;
-      margin-bottom: 12px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      color: #fff;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .today-panel .panel-header::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
     }
     .today-events {
       flex: 1;
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 10px;
+      overflow-y: auto;
     }
-    .today-events::-webkit-scrollbar { display: none; }
 
+    /* Right 2/3: 6 Upcoming Days Grid */
     .upcoming-container {
+      flex: 1;
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-template-rows: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 14px;
       height: 100%;
-      overflow: hidden;
     }
 
     .day-card {
       background: var(--card-bg);
-      border-radius: 14px;
       border: 1px solid var(--border);
-      padding: 10px 14px;
+      border-radius: 16px;
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
       overflow: hidden;
     }
+
     .day-header {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      padding-bottom: 6px;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
       border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
     }
     .day-title-group {
       display: flex;
       align-items: baseline;
-      gap: 8px;
+      gap: 6px;
     }
     .day-name {
       font-size: 1.05rem;
@@ -143,54 +149,53 @@
       color: #fff;
     }
     .day-date {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--accent);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
     }
     .tomorrow-badge {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 0.05em;
       background: rgba(56, 189, 248, 0.15);
       color: var(--accent);
-      padding: 2px 6px;
-      border-radius: 4px;
-      letter-spacing: 0.05em;
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
     }
+
     .day-events {
       flex: 1;
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 6px;
+      overflow-y: auto;
     }
-    .day-events::-webkit-scrollbar { display: none; }
 
-    /* Base event card */
     .event-card {
-      padding: 6px 10px;
       border-radius: 8px;
-      color: #fff;
+      padding: 8px 10px;
       display: flex;
       flex-direction: column;
       gap: 2px;
+      color: #fff;
       position: relative;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     }
     .event-card.current {
-      box-shadow: 0 0 14px rgba(255, 255, 255, 0.35);
-      border: 1.5px solid #fff;
+      box-shadow: 0 0 0 2px #fff, 0 4px 12px rgba(0,0,0,0.3);
     }
-    .event-card.current::after {
+    .event-card.current::before {
       content: 'NOW';
       position: absolute;
-      right: 8px;
-      top: 6px;
-      background: rgba(0, 0, 0, 0.55);
-      padding: 2px 6px;
+      top: 4px;
+      right: 6px;
+      font-size: 0.6rem;
+      background: rgba(0,0,0,0.4);
+      padding: 1px 4px;
       border-radius: 4px;
-      font-size: 0.65rem;
       font-weight: 800;
       letter-spacing: 0.05em;
     }
@@ -256,30 +261,28 @@
       letter-spacing: 0.08em;
       display: flex;
       align-items: center;
-      justify-content: center;
       gap: 6px;
     }
-    .fun-fact-body {
-      font-size: 0.92rem;
+    .fun-fact-text {
+      font-size: 0.95rem;
+      color: #e2e8f0;
       line-height: 1.45;
-      color: #cbd5e1;
       font-weight: 400;
     }
-
-    @media (max-width: 900px) {
-      body { height: auto; overflow: auto; }
-      main {
-        grid-template-columns: 1fr;
-        height: auto;
-        overflow: visible;
-      }
-      .upcoming-container {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto;
-        height: auto;
-        overflow: visible;
-      }
+    .fun-fact-card.expired {
+      border-color: rgba(245, 158, 11, 0.5);
+      background: rgba(245, 158, 11, 0.08);
     }
+    .fun-fact-card.expired .fun-fact-header {
+      color: #fbbf24;
+    }
+    .fun-fact-card.expired .fun-fact-text {
+      color: #fef3c7;
+      font-weight: 600;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
   </style>
 </head>
 <body>
@@ -291,6 +294,7 @@
     </div>
     <div class="filters" id="filter-pills"></div>
   </header>
+
   <main>
     <section class="today-panel">
       <div class="panel-header">Today's Schedule</div>
@@ -308,6 +312,7 @@
       { id: 'mj', name: 'MJ', color: '#00897b' },
       { id: 'anna', name: 'Anna', color: '#ab47bc' },
       { id: 'boys', name: 'Boys', color: '#f57c00' },
+      { id: 'eleanor', name: 'Eleanor', color: '#f43f5e' },
       { id: 'us_holidays', name: 'US Holidays', color: '#10b981' }
     ];
     let selectedCal = 'all';
@@ -435,24 +440,23 @@
       const now = new Date();
       const todayStr = getDayString(now);
 
+      const target = CALENDARS.find(c => c.id === selectedCal);
       const filtered = cachedEvents.filter(e => {
-        if (selectedCal === 'all') return true;
-        const target = CALENDARS.find(c => c.id === selectedCal);
-        if (!target) return true;
-        const eId = (e.calendarId || '').toLowerCase().trim();
-        const eName = (e.calendarName || '').toLowerCase().trim();
-        const tId = target.id.toLowerCase().trim();
-        const tName = target.name.toLowerCase().trim();
+        if (!target || target.id === 'all') return true;
+        const eId = (e.calendarId || '').toLowerCase();
+        const eName = (e.calendarName || '').toLowerCase();
+        const tId = target.id.toLowerCase();
+        const tName = target.name.toLowerCase();
 
         if (eId === tId || eName === tName) return true;
         if (target.id === 'us_holidays' && (eId.includes('holiday') || eName.includes('holiday'))) return true;
         if (target.id === 'mj' && (eId === 'mj' || eName === 'mj' || eName === 'mj ramos')) return true;
         if (target.id === 'boys' && (eId.includes('boy') || eName.includes('boy'))) return true;
+        if (target.id === 'eleanor' && (eId.includes('eleanor') || eName.includes('eleanor'))) return true;
         if (target.id === 'anna_mj' && (eId.includes('anna_mj') || eName.includes('anna & mj'))) return true;
         if (target.id === 'anna' && (eId === 'anna' || eName === 'anna')) return true;
         return false;
       });
-
       const todayList = [];
       const eventsByDay = new Map();
 
@@ -490,11 +494,12 @@
             <div class="empty-state">
               <div class="empty-state-icon">✨</div>
               <div class="empty-state-title">All clear for today!</div>
-              <div class="fun-fact-card expired" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(30, 27, 75, 0.6);">
-                <div class="fun-fact-header" style="color: #f59e0b;">🔔 Calendar Update</div>
-                <div class="fun-fact-body" style="font-weight: 600; color: #fbbf24; font-size: 1.05rem;">${fact.text}</div>
+              <div class="fun-fact-card expired">
+                <div class="fun-fact-header">🔔 Calendar Update</div>
+                <div class="fun-fact-text">Please download new fun facts</div>
               </div>
-            </div>`;
+            </div>
+          `;
         } else {
           container.innerHTML = `
             <div class="empty-state">
@@ -502,9 +507,10 @@
               <div class="empty-state-title">All clear for today!</div>
               <div class="fun-fact-card">
                 <div class="fun-fact-header">💡 Fun Fact · Day ${fact.dayNumber} of 365</div>
-                <div class="fun-fact-body">${fact.text}</div>
+                <div class="fun-fact-text">${fact.text}</div>
               </div>
-            </div>`;
+            </div>
+          `;
         }
         return;
       }
