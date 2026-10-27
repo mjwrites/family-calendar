@@ -354,7 +354,6 @@
       const container = document.getElementById('upcoming-container');
       container.innerHTML = '';
 
-      // Days 1 through 6
       for (let i = 1; i <= 6; i++) {
         const dayDate = getDaysAhead(now, i);
         const dayKey = getDayString(dayDate);
@@ -420,11 +419,29 @@
       });
     }
 
+    const EVENTS_API_URL = 'https://script.google.com/macros/s/AKfycbwq-Yzjxyu5gbaoM4iT7qwHX8wdcJ6X77UsXPtr0X1LLn7A6C86RkOzAvqOevqceyQ0/exec';
+
     async function fetchEvents() {
       try {
-        const resp = await fetch('events.json?t=' + Date.now());
-        if (resp.ok) { cachedEvents = await resp.json(); renderEvents(); }
-      } catch (err) { console.error('Fetch failed:', err); }
+        const resp = await fetch(EVENTS_API_URL, { redirect: 'follow' });
+        if (resp.ok) {
+          cachedEvents = await resp.json();
+          renderEvents();
+          return;
+        }
+      } catch (err) {
+        console.warn('Live API fetch failed, trying fallback:', err);
+      }
+
+      try {
+        const fallbackResp = await fetch('events.json?t=' + Date.now());
+        if (fallbackResp.ok) {
+          cachedEvents = await fallbackResp.json();
+          renderEvents();
+        }
+      } catch (e) {
+        console.error('All event fetches failed:', e);
+      }
     }
 
     async function requestWakeLock() {
@@ -436,7 +453,6 @@
     setInterval(updateClock, 1000);
     setInterval(fetchEvents, 60000);
 
-    // Auto-reload webpage when new GitHub Pages commit deploys
     async function checkForPageUpdate() {
       try {
         const resp = await fetch(window.location.href, { method: 'HEAD', cache: 'no-cache' });
