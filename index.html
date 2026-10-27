@@ -205,14 +205,49 @@
       align-items: center;
       justify-content: center;
       color: var(--text-muted);
-      font-size: 1.15rem;
       text-align: center;
-      gap: 10px;
-      transform: translateY(-25px); /* Centers the block optically on the text instead of the emoji */
+      padding: 0 16px;
+      transform: translateY(-20px);
     }
     .empty-state-icon {
       font-size: 2.2rem;
-      opacity: 0.6;
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+    .empty-state-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: -0.01em;
+    }
+    .fun-fact-card {
+      margin-top: 24px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 14px;
+      padding: 16px 20px;
+      max-width: 320px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .fun-fact-header {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .fun-fact-body {
+      font-size: 0.92rem;
+      line-height: 1.45;
+      color: #cbd5e1;
+      font-weight: 400;
     }
 
     @media (max-width: 900px) {
@@ -248,6 +283,7 @@
     <section class="upcoming-container" id="upcoming-container"></section>
   </main>
 
+  <script src="facts.js"></script>
   <script>
     const TIMEZONE = 'America/Los_Angeles';
     let cachedEvents = [];
@@ -259,6 +295,43 @@
       'Anna': '#ec4899',
       'US Holidays': '#10b981'
     };
+
+    const FUN_FACTS_START_DATE = '2026-10-27';
+
+    function getDailyFunFact() {
+      const now = new Date();
+      const todayStr = getDayString(now);
+
+      let startDateStr = localStorage.getItem('fun_facts_start_date');
+      if (!startDateStr) {
+        startDateStr = FUN_FACTS_START_DATE;
+        localStorage.setItem('fun_facts_start_date', startDateStr);
+      }
+
+      const startParts = startDateStr.split('-').map(Number);
+      const todayParts = todayStr.split('-').map(Number);
+      const dStart = new Date(startParts[0], startParts[1] - 1, startParts[2]);
+      const dToday = new Date(todayParts[0], todayParts[1] - 1, todayParts[2]);
+      const dayIndex = Math.round((dToday - dStart) / (1000 * 60 * 60 * 24));
+
+      const factsList = (typeof FUN_FACTS !== 'undefined' && Array.isArray(FUN_FACTS)) ? FUN_FACTS : [];
+
+      if (!factsList.length || dayIndex >= factsList.length) {
+        return {
+          text: "Please download new fun facts",
+          isExpired: true,
+          dayNumber: dayIndex + 1
+        };
+      }
+      if (dayIndex < 0) {
+        return { text: factsList[0], isExpired: false, dayNumber: 1 };
+      }
+      return {
+        text: factsList[dayIndex],
+        isExpired: false,
+        dayNumber: dayIndex + 1
+      };
+    }
 
     function updateClock() {
       const now = new Date();
@@ -279,6 +352,11 @@
         day: 'numeric'
       });
       document.getElementById('date-display').textContent = dateStr;
+
+      // Auto-clear check: re-evaluate at the start of every minute
+      if (now.getSeconds() === 0 && cachedEvents.length > 0) {
+        renderEvents();
+      }
     }
 
     function renderPills() {
@@ -327,49 +405,72 @@
         ? cachedEvents
         : cachedEvents.filter(e => e.calendarName === activeFilter);
 
-      renderTodayEvents(filtered, now, todayStr);
-      renderUpcomingDays(filtered, now, todayStr);
+      const todayList = [];
+      const eventsByDay = new Map();
+
+      filtered.forEach(e => {
+        const start = new Date(e.start);
+        const end = new Date(e.end);
+        const eventDay = getDayString(start);
+        const isToday = (eventDay === todayStr);
+        const notEndedYet = (end > now);
+
+        // Auto-clear: timed events that already ended are cleared out
+        if ((isToday && notEndedYet) || (isToday && e.allDay) || (start <= now && notEndedYet)) {
+          todayList.push(e);
+        } else if (eventDay > todayStr) {
+          if (!eventsByDay.has(eventDay)) {
+            eventsByDay.set(eventDay, []);
+          }
+          eventsByDay.get(eventDay).push(e);
+        }
+      });
+
+      todayList.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+      renderTodayEvents(todayList);
+      renderUpcomingDays(eventsByDay, now);
     }
 
-    function renderTodayEvents(events, now, todayStr) {
+    function renderTodayEvents(events) {
       const container = document.getElementById('today-events');
       container.innerHTML = '';
 
-      const todayEvents = events.filter(e => {
-        const s = getDayString(new Date(e.start));
-        const end = new Date(e.end);
-        return s === todayStr || (s < todayStr && end > now);
-      });
-
-      todayEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
-
-      if (todayEvents.length === 0) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-icon">✨</div>
-            <div>All clear for today!</div>
-          </div>
-        `;
+      if (events.length === 0) {
+        const fact = getDailyFunFact();
+        if (fact.isExpired) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">✨</div>
+              <div class="empty-state-title">All clear for today!</div>
+              <div class="fun-fact-card expired" style="border-color: rgba(245, 158, 11, 0.4); background: rgba(30, 27, 75, 0.6);">
+                <div class="fun-fact-header" style="color: #f59e0b;">🔔 Calendar Update</div>
+                <div class="fun-fact-body" style="font-weight: 600; color: #fbbf24; font-size: 1.05rem;">${fact.text}</div>
+              </div>
+            </div>`;
+        } else {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">✨</div>
+              <div class="empty-state-title">All clear for today!</div>
+              <div class="fun-fact-card">
+                <div class="fun-fact-header">💡 Fun Fact · Day ${fact.dayNumber} of 365</div>
+                <div class="fun-fact-body">${fact.text}</div>
+              </div>
+            </div>`;
+        }
         return;
       }
 
-      todayEvents.forEach(e => {
+      const now = new Date();
+      events.forEach(e => {
         container.appendChild(createEventCard(e, now, true));
       });
     }
 
-    function renderUpcomingDays(events, now, todayStr) {
+    function renderUpcomingDays(eventsByDay, now) {
       const container = document.getElementById('upcoming-container');
       container.innerHTML = '';
-
-      const eventsByDay = new Map();
-      events.forEach(e => {
-        const dayKey = getDayString(new Date(e.start));
-        if (dayKey > todayStr) {
-          if (!eventsByDay.has(dayKey)) eventsByDay.set(dayKey, []);
-          eventsByDay.get(dayKey).push(e);
-        }
-      });
 
       for (let i = 1; i <= 6; i++) {
         const dayDate = getDaysAhead(now, i);
@@ -470,6 +571,7 @@
 
     setInterval(updateClock, 1000);
     setInterval(fetchEvents, 60000);
+
     // Auto-reload webpage when new GitHub Pages commit deploys
     async function checkForPageUpdate() {
       try {
