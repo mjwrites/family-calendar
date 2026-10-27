@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Family Calendar</title>
   <style>
     :root {
@@ -18,13 +18,12 @@
     body {
       background-color: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       height: 100vh;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       user-select: none;
-      -webkit-user-select: none;
     }
     header {
       display: flex;
@@ -34,23 +33,40 @@
       background: var(--card-bg);
       border-bottom: 1px solid var(--border);
       height: 75px;
+      position: relative;
+      z-index: 100;
     }
     .clock-group { display: flex; align-items: baseline; gap: 12px; }
     #clock { font-size: 2.6rem; font-weight: 700; letter-spacing: -1px; }
     #ampm { font-size: 1.2rem; color: var(--text-muted); font-weight: 600; }
     #date-display { font-size: 1.35rem; color: var(--accent); font-weight: 500; }
-    .filters { display: flex; gap: 10px; }
+    .filters {
+      display: flex;
+      gap: 10px;
+      position: relative;
+      z-index: 101;
+    }
     .pill {
       padding: 7px 16px;
       border-radius: 9999px;
       font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
-      opacity: 0.45;
-      transition: all 0.2s ease;
-      border: 1px solid transparent;
+      opacity: 0.35;
+      transition: all 0.15s ease;
+      border: 2px solid transparent;
+      outline: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      pointer-events: auto;
     }
-    .pill.active { opacity: 1; transform: scale(1.05); }
+    .pill.active {
+      opacity: 1 !important;
+      transform: scale(1.08);
+      border: 2px solid rgba(255, 255, 255, 0.95);
+    }
 
     main {
       flex: 1;
@@ -182,7 +198,7 @@
     .event-title { font-size: 0.95rem; font-weight: 700; line-height: 1.2; }
     .event-loc { font-size: 0.75rem; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* All Today events share the uniform height of an event with location (~63px) */
+    /* All Today events share the uniform height of an event with location */
     .today-panel .event-card {
       min-height: 63px;
       justify-content: center;
@@ -271,7 +287,7 @@
     <div class="clock-group">
       <div id="clock">12:00</div>
       <div id="ampm">PM</div>
-      <div id="date-display">Today</div>
+      <div id="date-display">Loading...</div>
     </div>
     <div class="filters" id="filter-pills"></div>
   </header>
@@ -280,15 +296,12 @@
       <div class="panel-header">Today's Schedule</div>
       <div class="today-events" id="today-events"></div>
     </section>
-    <section class="upcoming-container" id="upcoming-container"></section>
+    <section class="upcoming-container" id="upcoming-container">
+    </section>
   </main>
-
   <script src="facts.js"></script>
   <script>
     const TIMEZONE = 'America/Los_Angeles';
-    let cachedEvents = [];
-    let selectedCal = 'all';
-
     const CALENDARS = [
       { id: 'all', name: 'All', color: '#475569' },
       { id: 'anna_mj', name: 'Anna & MJ', color: '#3f51b5' },
@@ -297,6 +310,8 @@
       { id: 'boys', name: 'Boys', color: '#f57c00' },
       { id: 'us_holidays', name: 'US Holidays', color: '#10b981' }
     ];
+    let selectedCal = 'all';
+    let cachedEvents = [];
 
     const FUN_FACTS_START_DATE = '2026-10-27';
 
@@ -316,20 +331,18 @@
       const dToday = new Date(todayParts[0], todayParts[1] - 1, todayParts[2]);
       const dayIndex = Math.round((dToday - dStart) / (1000 * 60 * 60 * 24));
 
-      const factsList = (typeof FUN_FACTS !== 'undefined' && Array.isArray(FUN_FACTS)) ? FUN_FACTS : [];
-
-      if (!factsList.length || dayIndex >= factsList.length) {
+      if (dayIndex < 0) {
+        return { text: FUN_FACTS[0], isExpired: false, dayNumber: 1 };
+      }
+      if (dayIndex >= FUN_FACTS.length) {
         return {
           text: "Please download new fun facts",
           isExpired: true,
           dayNumber: dayIndex + 1
         };
       }
-      if (dayIndex < 0) {
-        return { text: factsList[0], isExpired: false, dayNumber: 1 };
-      }
       return {
-        text: factsList[dayIndex],
+        text: FUN_FACTS[dayIndex],
         isExpired: false,
         dayNumber: dayIndex + 1
       };
@@ -364,16 +377,38 @@
       }
     }
 
+    let lastFilterTouch = 0;
     function renderPills() {
       const container = document.getElementById('filter-pills');
       container.innerHTML = '';
       CALENDARS.forEach(cal => {
-        const btn = document.createElement('div');
-        btn.className = `pill ${selectedCal === cal.id ? 'active' : ''}`;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        const isActive = (selectedCal === cal.id);
+        btn.className = `pill ${isActive ? 'active' : ''}`;
         btn.textContent = cal.name;
         btn.style.backgroundColor = cal.color;
-        btn.style.color = '#fff';
-        btn.onclick = () => { selectedCal = cal.id; renderPills(); renderEvents(); };
+        btn.style.color = '#ffffff';
+        if (isActive) {
+          btn.style.boxShadow = `0 0 14px ${cal.color}cc`;
+        }
+
+        const handleFilter = (e) => {
+          if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          const now = Date.now();
+          if (now - lastFilterTouch < 200) return;
+          lastFilterTouch = now;
+
+          selectedCal = (selectedCal === cal.id) ? 'all' : cal.id;
+          renderPills();
+          renderEvents();
+        };
+
+        btn.addEventListener('pointerdown', handleFilter);
+        btn.addEventListener('click', handleFilter);
         container.appendChild(btn);
       });
     }
@@ -404,15 +439,17 @@
         if (selectedCal === 'all') return true;
         const target = CALENDARS.find(c => c.id === selectedCal);
         if (!target) return true;
-        const eId = (e.calendarId || '').toLowerCase();
-        const eName = (e.calendarName || '').toLowerCase();
-        const tId = target.id.toLowerCase();
-        const tName = target.name.toLowerCase();
+        const eId = (e.calendarId || '').toLowerCase().trim();
+        const eName = (e.calendarName || '').toLowerCase().trim();
+        const tId = target.id.toLowerCase().trim();
+        const tName = target.name.toLowerCase().trim();
 
         if (eId === tId || eName === tName) return true;
         if (target.id === 'us_holidays' && (eId.includes('holiday') || eName.includes('holiday'))) return true;
         if (target.id === 'mj' && (eId === 'mj' || eName === 'mj' || eName === 'mj ramos')) return true;
         if (target.id === 'boys' && (eId.includes('boy') || eName.includes('boy'))) return true;
+        if (target.id === 'anna_mj' && (eId.includes('anna_mj') || eName.includes('anna & mj'))) return true;
+        if (target.id === 'anna' && (eId === 'anna' || eName === 'anna')) return true;
         return false;
       });
 
@@ -439,15 +476,14 @@
 
       todayList.sort((a, b) => new Date(a.start) - new Date(b.start));
 
-      renderTodayEvents(todayList);
-      renderUpcomingDays(eventsByDay, now);
+      renderTodayList(todayList);
+      render6DaysGrid(eventsByDay, now);
     }
 
-    function renderTodayEvents(events) {
+    function renderTodayList(events) {
       const container = document.getElementById('today-events');
       container.innerHTML = '';
-
-      if (events.length === 0) {
+      if (!events.length) {
         const fact = getDailyFunFact();
         if (fact.isExpired) {
           container.innerHTML = `
@@ -472,17 +508,17 @@
         }
         return;
       }
-
       const now = new Date();
       events.forEach(e => {
         container.appendChild(createEventCard(e, now, true));
       });
     }
 
-    function renderUpcomingDays(eventsByDay, now) {
+    function render6DaysGrid(eventsByDay, now) {
       const container = document.getElementById('upcoming-container');
       container.innerHTML = '';
 
+      // Days 1 through 6
       for (let i = 1; i <= 6; i++) {
         const dayDate = getDaysAhead(now, i);
         const dayKey = getDayString(dayDate);
@@ -541,12 +577,11 @@
     }
 
     function formatTime(d) {
-      return new Intl.DateTimeFormat('en-US', {
+      return d.toLocaleTimeString('en-US', {
         timeZone: TIMEZONE,
         hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      }).format(d);
+        minute: '2-digit'
+      });
     }
 
     const EVENTS_API_URL = 'https://script.google.com/macros/s/AKfycbwq-Yzjxyu5gbaoM4iT7qwHX8wdcJ6X77UsXPtr0X1LLn7A6C86RkOzAvqOevqceyQ0/exec';
@@ -577,12 +612,11 @@
     async function requestWakeLock() {
       try {
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
-      } catch (err) {}
+      } catch(e) {}
     }
 
     setInterval(updateClock, 1000);
     setInterval(fetchEvents, 60000);
-
     // Auto-reload webpage when new GitHub Pages commit deploys
     async function checkForPageUpdate() {
       try {
@@ -611,7 +645,7 @@
       if (window.parent && window.parent !== window) {
         window.parent.postMessage(JSON.stringify({type: 'REMOTE_WINDOW', status: 'LOADED'}), '*');
       }
-    } catch(e) {}
+    } catch (e) {}
   </script>
 </body>
 </html>
