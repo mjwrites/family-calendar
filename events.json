@@ -1,5 +1,16 @@
 [
   {
+    "title": "Brinks call to setup cameras",
+    "calendarId": "mj",
+    "calendarName": "MJ",
+    "color": "#00897b",
+    "textColor": "#ffffff",
+    "start": "2026-10-28T10:00:00-07:00",
+    "end": "2026-10-28T12:00:00-07:00",
+    "allDay": false,
+    "location": ""
+  },
+  {
     "title": "PT",
     "calendarId": "mj",
     "calendarName": "MJ",
