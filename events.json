@@ -1,16 +1,5 @@
 [
   {
-    "title": "Brinks call to setup cameras",
-    "calendarId": "mj",
-    "calendarName": "MJ",
-    "color": "#00897b",
-    "textColor": "#ffffff",
-    "start": "2026-10-28T10:00:00-07:00",
-    "end": "2026-10-28T12:00:00-07:00",
-    "allDay": false,
-    "location": ""
-  },
-  {
     "title": "PT",
     "calendarId": "mj",
     "calendarName": "MJ",
@@ -31,6 +20,17 @@
     "end": "2026-10-29T20:00:00-07:00",
     "allDay": false,
     "location": "Harry's Beach House\\, 2676 Alki Ave SW\\, Seattle\\, WA 98116\\, USA"
+  },
+  {
+    "title": "Pumpkin Carving w/ Sibs",
+    "calendarId": "anna_mj",
+    "calendarName": "Anna & MJ",
+    "color": "#3f51b5",
+    "textColor": "#ffffff",
+    "start": "2026-10-30T18:00:00-07:00",
+    "end": "2026-10-30T19:00:00-07:00",
+    "allDay": false,
+    "location": ""
   },
   {
     "title": "Water plants",
