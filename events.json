@@ -33,6 +33,17 @@
     "location": ""
   },
   {
+    "title": "Table Pickup 7am-3pm",
+    "calendarId": "anna_mj",
+    "calendarName": "Anna & MJ",
+    "color": "#3f51b5",
+    "textColor": "#ffffff",
+    "start": "2026-11-05T12:00:00-08:00",
+    "end": "2026-11-05T13:00:00-08:00",
+    "allDay": false,
+    "location": ""
+  },
+  {
     "title": "Therapy",
     "calendarId": "mj",
     "calendarName": "MJ",
@@ -106,6 +117,28 @@
     "textColor": "#ffffff",
     "start": "2026-11-14T07:30:00-08:00",
     "end": "2026-11-14T08:00:00-08:00",
+    "allDay": false,
+    "location": ""
+  },
+  {
+    "title": "\ud83e\udd52 - teaching",
+    "calendarId": "mj",
+    "calendarName": "MJ",
+    "color": "#00897b",
+    "textColor": "#ffffff",
+    "start": "2026-11-14T10:00:00-08:00",
+    "end": "2026-11-14T11:00:00-08:00",
+    "allDay": false,
+    "location": ""
+  },
+  {
+    "title": "Seattle Auto Show",
+    "calendarId": "anna_mj",
+    "calendarName": "Anna & MJ",
+    "color": "#3f51b5",
+    "textColor": "#ffffff",
+    "start": "2026-11-14T11:00:00-08:00",
+    "end": "2026-11-14T21:00:00-08:00",
     "allDay": false,
     "location": ""
   }
