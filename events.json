@@ -55,6 +55,17 @@
     "location": ""
   },
   {
+    "title": "\ud83e\udd52",
+    "calendarId": "mj",
+    "calendarName": "MJ",
+    "color": "#00897b",
+    "textColor": "#ffffff",
+    "start": "2026-11-15T12:00:00-08:00",
+    "end": "2026-11-15T14:00:00-08:00",
+    "allDay": false,
+    "location": ""
+  },
+  {
     "title": "PT",
     "calendarId": "mj",
     "calendarName": "MJ",
